@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:;base64,=">
+    <title>RhinoCompute: Necklace Configurator</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+
+        /* CSS for a spinning animation */
+        #loader {
+            border: 5px solid #f3f3f3;
+            /* Light grey */
+            border-top: 5px solid #3d3d3d;
+            /* Grey */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            display: none;
+            /* Hidden by default */
+            z-index: 1000;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* UI Panel styling */
+        #ui-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            width: 250px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+        }
+
+        .value-display {
+            float: right;
+            font-weight: normal;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loader"></div>
+
+    <div id="ui-panel">
+        <div class="control-group">
+            <label for="numMotors">Number of Motors: <span id="numMotorsVal" class="value-display">6</span></label>
+            <input type="range" id="numMotors" min="2" max="10" step="1" value="6">
+        </div>
+        <div class="control-group">
+            <label for="lenConnector">Length of connector: <span id="lenConnectorVal"
+                    class="value-display">1.328</span></label>
+            <input type="range" id="lenConnector" min="0" max="3" step="0.001" value="1.328">
+        </div>
+        <button id="computeBtn">Compute Necklace</button>
+        <button id="downloadBtn" style="margin-top: 8px; background-color: #555;" disabled>Download STL</button>
+
+        <div id="output-panel" style="margin-top: 15px;">
+            <hr style="border: none; border-top: 1px solid #ccc; margin-bottom: 10px;">
+            <div class="control-group" style="margin-bottom: 8px;">
+                <label style="font-size: 13px;">Necklace length (excl. strap): <span id="lengthExclStrap" class="value-display">—</span></label>
+            </div>
+            <div class="control-group" style="margin-bottom: 0;">
+                <label style="font-size: 13px;">Necklace length (incl. strap): <span id="lengthInclStrap" class="value-display">—</span></label>
+            </div>
+        </div>
+    </div>
+
+    <script async src="https://unpkg.com/es-module-shims@1.7.0/dist/es-module-shims.js"></script>
+
+    <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://unpkg.com/three@0.144.0/build/three.module.js",
+                    "three/examples/jsm/controls/OrbitControls": "https://unpkg.com/three@0.144.0/examples/jsm/controls/OrbitControls.js",
+                    "three/examples/jsm/loaders/3DMLoader": "https://unpkg.com/three@0.144.0/examples/jsm/loaders/3DMLoader.js",
+                    "three/examples/jsm/exporters/STLExporter": "https://unpkg.com/three@0.144.0/examples/jsm/exporters/STLExporter.js",
+                    "rhino3dm":"https://unpkg.com/rhino3dm@8.0.0-beta/rhino3dm.module.js",
+                    "rhinocompute": "https://www.unpkg.com/compute-rhino3d@0.13.0-beta/compute.rhino3d.module.js"
+                }
+            }
+        </script>
+
+    <script type="module" src="./script.js"></script>
+</body>
+
+</html>
