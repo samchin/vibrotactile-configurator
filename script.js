@@ -53,11 +53,9 @@ let scene, camera, renderer, controls, resultGroup
 const rhino = await rhino3dm()
 console.log('Loaded rhino3dm.')
 
-// Load RhinoCompute config
-// config.json only needs "url" (your Lambda Function URL) — no API key in the frontend
-const configRes = await fetch('config.json')
-const config = await configRes.json()
-RhinoCompute.url = config.url
+// Load RhinoCompute config from user (prompted once, cached in localStorage)
+RhinoCompute.url = getAuth('RhinoCompute URL')
+RhinoCompute.apiKey = getAuth('RhinoCompute API Key')
 
 // Setup UI Event Listeners
 document.getElementById('numMotors').addEventListener('input', (e) => {
