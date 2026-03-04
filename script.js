@@ -53,9 +53,11 @@ let scene, camera, renderer, controls, resultGroup
 const rhino = await rhino3dm()
 console.log('Loaded rhino3dm.')
 
-// Load RhinoCompute config from user (prompted once, cached in localStorage)
-RhinoCompute.url = getAuth('RhinoCompute URL')
-RhinoCompute.apiKey = getAuth('RhinoCompute API Key')
+// Load RhinoCompute config
+const configRes = await fetch('config.json')
+const config = await configRes.json()
+RhinoCompute.url = config.url
+RhinoCompute.apiKey = config.apiKey
 
 // Setup UI Event Listeners
 document.getElementById('numMotors').addEventListener('input', (e) => {
