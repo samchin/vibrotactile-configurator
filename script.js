@@ -65,7 +65,7 @@ document.getElementById('numMotors').addEventListener('input', (e) => {
     updateEstimatedLengths()
 })
 document.getElementById('lenConnector').addEventListener('input', (e) => {
-    document.getElementById('lenConnectorVal').innerText = parseFloat(e.target.value).toFixed(3)
+    document.getElementById('lenConnectorVal').innerText = parseFloat(e.target.value).toFixed(4)
     updateEstimatedLengths()
 })
 document.getElementById('computeBtn').addEventListener('click', compute)
@@ -84,26 +84,29 @@ updateEstimatedLengths()
 async function compute() {
     showSpinner(true)
 
-    // Get values from HTML UI
-    const numberOfMotors = parseInt(document.getElementById('numMotors').value)
-    const lengthOfConnector = parseFloat(document.getElementById('lenConnector').value)
-    const curved = document.getElementById('curved').checked
+    // Get values from HTML UI - use Number() to ensure proper numeric types for RhinoCompute
+    const numberOfMotors = Math.round(Number(document.getElementById('numMotors').value))
+    const lengthOfConnector = Number(document.getElementById('lenConnector').value)
 
-    // Format data into Grasshopper DataTrees
-    let param1 = new RhinoCompute.Grasshopper.DataTree('Number of Motors')
-    param1.append([0], [numberOfMotors])
+    console.log('Raw values:', { numberOfMotors, lengthOfConnector, types: { motors: typeof numberOfMotors, connector: typeof lengthOfConnector } })
 
-    let param2 = new RhinoCompute.Grasshopper.DataTree('Length of connector')
-    param2.append([0], [lengthOfConnector])
+    // Format data into Grasshopper DataTrees (order matches definition: Length of connector first, Number of Motors second)
+    let param1 = new RhinoCompute.Grasshopper.DataTree('Length of connector')
+    param1.append([0], [lengthOfConnector])  // Ensure number, not string
 
-    let param3 = new RhinoCompute.Grasshopper.DataTree('Curved?')
-    param3.append([0], [curved])
+    let param2 = new RhinoCompute.Grasshopper.DataTree('Number of Motors')
+    param2.append([0], [numberOfMotors])  // Ensure number, not string
 
-    // Add all params to an array
-    let trees = []
-    trees.push(param1)
-    trees.push(param2)
-    trees.push(param3)
+    let trees = [param1, param2]
+
+    const curvedEl = document.getElementById('curved')
+    if (curvedEl) {
+        const param3 = new RhinoCompute.Grasshopper.DataTree('Curved?')
+        param3.append([0], [curvedEl.checked])
+        trees.push(param3)
+    }
+
+    console.log('Sending params:', { numberOfMotors, lengthOfConnector, curved: curvedEl?.checked })
 
     // Call RhinoCompute
     try {
