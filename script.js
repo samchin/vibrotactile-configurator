@@ -87,6 +87,7 @@ async function compute() {
     // Get values from HTML UI
     const numberOfMotors = parseInt(document.getElementById('numMotors').value)
     const lengthOfConnector = parseFloat(document.getElementById('lenConnector').value)
+    const curved = document.getElementById('curved').checked
 
     // Format data into Grasshopper DataTrees
     let param1 = new RhinoCompute.Grasshopper.DataTree('Number of Motors')
@@ -95,10 +96,14 @@ async function compute() {
     let param2 = new RhinoCompute.Grasshopper.DataTree('Length of connector')
     param2.append([0], [lengthOfConnector])
 
+    let param3 = new RhinoCompute.Grasshopper.DataTree('Curved?')
+    param3.append([0], [curved])
+
     // Add all params to an array
     let trees = []
     trees.push(param1)
     trees.push(param2)
+    trees.push(param3)
 
     // Call RhinoCompute
     try {
