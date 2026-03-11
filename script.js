@@ -90,23 +90,19 @@ async function compute() {
 
     console.log('Values:', { numberOfMotors, lengthOfConnector, curved })
 
-    // Use the DataTree class and access its internal data property
-    let param1 = new RhinoCompute.Grasshopper.DataTree('Length of connector')
+    // EXACT NickNames from Grasshopper's Get components (case-sensitive!)
+    let param1 = new RhinoCompute.Grasshopper.DataTree('Length of Connector')  // Capital 'C'
     param1.append([0], [lengthOfConnector])
 
-    let param2 = new RhinoCompute.Grasshopper.DataTree('Number of Motors')
+    let param2 = new RhinoCompute.Grasshopper.DataTree('Number of motors')  // lowercase 'm'
     param2.append([0], [numberOfMotors])
 
     let param3 = new RhinoCompute.Grasshopper.DataTree('Curved?')
     param3.append([0], [curved])
 
-    // Log what's actually in the data property
-    console.log('param1.data:', JSON.stringify(param1.data, null, 2))
+    const trees = [param1.data, param2.data, param3.data]
 
-    // evaluateDefinition expects objects with .data; pass DataTree instances
-    const trees = [param1, param2, param3]
-
-    console.log('Trees being sent:', JSON.stringify(trees.map(t => t.data), null, 2))
+    console.log('Trees being sent:', JSON.stringify(trees, null, 2))
 
     try {
         const res = await RhinoCompute.Grasshopper.evaluateDefinition(definition, trees)
