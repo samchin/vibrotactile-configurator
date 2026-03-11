@@ -103,9 +103,6 @@ async function compute() {
 
     console.log('Values:', { numberOfMotors, lengthOfConnector, curved })
 
-    // Convert definition to base64
-    const base64Definition = uint8ArrayToBase64(definition)
-
     // Construct parameters with exact case-sensitive names from Grasshopper
     const trees = [
         {
@@ -131,32 +128,11 @@ async function compute() {
     console.log('Trees being sent:', JSON.stringify(trees, null, 2))
 
     try {
-        const response = await fetch(RhinoCompute.url + '/grasshopper', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RhinoComputeKey': RhinoCompute.apiKey || ''
-            },
-            body: JSON.stringify({
-                algo: base64Definition,
-                pointer: null,
-                values: trees
-            })
-        })
-
-        const text = await response.text()
-        console.log('Raw response status:', response.status)
-        console.log('Raw response body:', text.substring(0, 500))
-
-        if (!response.ok) {
-            console.error('Server error:', text)
-            showSpinner(false)
-            return
-        }
-
-        const responseJson = JSON.parse(text)
-        console.log("Compute response:", responseJson)
-        collectResults(responseJson)
+        // evaluateDefinition expects objects with .data; wrap our trees
+        const treesWithData = trees.map(t => ({ data: t }))
+        const res = await RhinoCompute.Grasshopper.evaluateDefinition(definition, treesWithData)
+        console.log("Compute response:", res)
+        collectResults(res)
     } catch (err) {
         console.error("Error computing definition:", err)
         showSpinner(false)
