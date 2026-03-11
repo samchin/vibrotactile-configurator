@@ -45,6 +45,19 @@ function updateEstimatedLengths() {
     document.getElementById('lengthInclStrap').innerText = result.includingStrap + '"'
 }
 
+/**
+ * Safely convert Uint8Array to base64 string (handles large files)
+ */
+function uint8ArrayToBase64(uint8Array) {
+    let binary = ''
+    const chunkSize = 8192
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+        const chunk = uint8Array.subarray(i, i + chunkSize)
+        binary += String.fromCharCode.apply(null, chunk)
+    }
+    return btoa(binary)
+}
+
 // Globals
 let definition, doc
 let scene, camera, renderer, controls, resultGroup
@@ -90,49 +103,60 @@ async function compute() {
 
     console.log('Values:', { numberOfMotors, lengthOfConnector, curved })
 
-    // EXACT NickNames from Grasshopper's Get components (case-sensitive!)
-    let param1 = new RhinoCompute.Grasshopper.DataTree('Length of Connector')  // Capital 'C'
-    param1.append([0], [lengthOfConnector])
+    // Convert definition to base64
+    const base64Definition = uint8ArrayToBase64(definition)
 
-    let param2 = new RhinoCompute.Grasshopper.DataTree('Number of motors')  // lowercase 'm'
-    param2.append([0], [numberOfMotors])
-
-    let param3 = new RhinoCompute.Grasshopper.DataTree('Curved?')
-    param3.append([0], [curved])
-
-    const trees = [param1.data, param2.data, param3.data]
+    // Construct parameters with exact case-sensitive names from Grasshopper
+    const trees = [
+        {
+            ParamName: 'Length of Connector',
+            InnerTree: {
+                '0': [{ type: 'System.Double', data: JSON.stringify(lengthOfConnector) }]
+            }
+        },
+        {
+            ParamName: 'Number of motors',
+            InnerTree: {
+                '0': [{ type: 'System.Int32', data: JSON.stringify(numberOfMotors) }]
+            }
+        },
+        {
+            ParamName: 'Curved?',
+            InnerTree: {
+                '0': [{ type: 'System.Boolean', data: JSON.stringify(curved) }]
+            }
+        }
+    ]
 
     console.log('Trees being sent:', JSON.stringify(trees, null, 2))
 
-    // Temporary: raw fetch to see the actual response/error
-    let binary = ''
-    for (let i = 0; i < definition.length; i += 8192) {
-        binary += String.fromCharCode.apply(null, definition.subarray(i, Math.min(i + 8192, definition.length)))
-    }
-    const algoBase64 = btoa(binary)
     try {
-        const response = await fetch(RhinoCompute.url + 'grasshopper', {
+        const response = await fetch(RhinoCompute.url + '/grasshopper', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'RhinoComputeKey': RhinoCompute.apiKey
+                'RhinoComputeKey': RhinoCompute.apiKey || ''
             },
             body: JSON.stringify({
-                algo: algoBase64,
+                algo: base64Definition,
                 pointer: null,
                 values: trees
             })
         })
-        const text = await response.text()
-        console.log('Raw response:', response.status, text)
-    } catch (err) {
-        console.error('Fetch error:', err)
-    }
 
-    try {
-        const res = await RhinoCompute.Grasshopper.evaluateDefinition(definition, trees)
-        console.log("Compute response:", res)
-        collectResults(res)
+        const text = await response.text()
+        console.log('Raw response status:', response.status)
+        console.log('Raw response body:', text.substring(0, 500))
+
+        if (!response.ok) {
+            console.error('Server error:', text)
+            showSpinner(false)
+            return
+        }
+
+        const responseJson = JSON.parse(text)
+        console.log("Compute response:", responseJson)
+        collectResults(responseJson)
     } catch (err) {
         console.error("Error computing definition:", err)
         showSpinner(false)
@@ -277,18 +301,6 @@ function decodeItem(item) {
     return null
 }
 
-function getAuth(key) {
-    let value = localStorage[key]
-    if (value === undefined) {
-        const promptStr = key.includes('URL') ? 'Server URL' : 'Server API Key'
-        value = window.prompt('RhinoCompute ' + promptStr)
-        if (value !== null) {
-            localStorage.setItem(key, value)
-        }
-    }
-    return value
-}
-
 function showSpinner(enable) {
     if (enable)
         document.getElementById('loader').style.display = 'block'
@@ -302,7 +314,7 @@ function init() {
     THREE.Object3D.DefaultUp = new THREE.Vector3(0, 0, 1)
 
     scene = new THREE.Scene()
-    scene.background = new THREE.Color(0xf0f0f0) // Soft light gray background
+    scene.background = new THREE.Color(0xf0f0f0)
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
     camera.position.set(0, 30, 30)
 
@@ -313,7 +325,6 @@ function init() {
 
     controls = new OrbitControls(camera, renderer.domElement)
 
-    // Lighting setup to make the geometry pop
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1)
     directionalLight.position.set(10, 20, 10)
     scene.add(directionalLight)
