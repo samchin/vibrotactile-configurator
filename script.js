@@ -26,20 +26,15 @@ const GH_CONSTANTS = {
 function preCalculateNecklace(numMotors, spaceBetweenMotorsCm, strapLengthCm) {
     const totalWithoutStrap = numMotors * (spaceBetweenMotorsCm ?? 2.5)
     const totalWithStrap = totalWithoutStrap + (strapLengthCm ?? 20.24)
-
-    return {
-        excludingStrapCm: parseFloat(totalWithoutStrap.toFixed(2)),
-        includingStrapCm: parseFloat(totalWithStrap.toFixed(2))
-    }
+    return parseFloat(totalWithStrap.toFixed(2))
 }
 
 function updateEstimatedLengths() {
     const numMotors = parseInt(document.getElementById('numMotors').value)
     const strapCm = parseFloat(document.getElementById('strapLength')?.value ?? 20.24)
     const spaceCm = parseFloat(document.getElementById('spaceBetweenMotors')?.value ?? 2.5)
-    const result = preCalculateNecklace(numMotors, spaceCm, strapCm)
-    document.getElementById('lengthExclStrap').innerText = result.excludingStrapCm + ' cm'
-    document.getElementById('lengthInclStrap').innerText = result.includingStrapCm + ' cm'
+    const lengthCm = preCalculateNecklace(numMotors, spaceCm, strapCm)
+    document.getElementById('lengthInclStrap').innerText = lengthCm + ' cm'
 }
 
 /**
@@ -148,9 +143,6 @@ function collectResults(responseJson) {
 
                 // Check for panel text outputs
                 if (paramName === 'Length of necklace excluding strap in inches') {
-                    const valInches = parseFloat(JSON.parse(branch[j].data))
-                    const valCm = (valInches * 2.54).toFixed(2)
-                    document.getElementById('lengthExclStrap').innerText = valCm + ' cm'
                     continue
                 }
                 if (paramName === 'Length of necklace including strap in inches') {
