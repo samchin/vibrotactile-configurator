@@ -83,10 +83,6 @@ document.getElementById('numMotors').addEventListener('input', (e) => {
     document.getElementById('numMotorsVal').innerText = e.target.value
     updateEstimatedLengths()
 })
-document.getElementById('lenConnector').addEventListener('input', (e) => {
-    document.getElementById('lenConnectorVal').innerText = parseFloat(e.target.value).toFixed(4)
-    updateEstimatedLengths()
-})
 document.getElementById('strapLength')?.addEventListener('input', (e) => {
     document.getElementById('strapLengthVal').innerText = parseFloat(e.target.value).toFixed(3)
     updateEstimatedLengths()
@@ -111,16 +107,13 @@ async function compute() {
     showSpinner(true)
 
     const numberOfMotors = Math.round(Number(document.getElementById('numMotors').value))
-    const lengthOfConnector = Number(document.getElementById('lenConnector').value)
     const curved = document.getElementById('curved')?.checked || false
     const strapLength = Number(document.getElementById('strapLength')?.value ?? 7.97)
     const spaceBetweenMotors = Number(document.getElementById('spaceBetweenMotors')?.value ?? 2.5)
 
-    console.log('Values:', { numberOfMotors, lengthOfConnector, curved, strapLength, spaceBetweenMotors })
+    console.log('Values:', { numberOfMotors, curved, strapLength, spaceBetweenMotors })
 
-    // Construct parameters with exact case-sensitive names from Grasshopper (must match NickNames)
     const trees = [
-        { ParamName: 'Length of connector', InnerTree: { '0': [{ type: 'System.Double', data: JSON.stringify(lengthOfConnector) }] } },
         { ParamName: 'Number of motors', InnerTree: { '0': [{ type: 'System.Int32', data: JSON.stringify(numberOfMotors) }] } },
         { ParamName: 'Curved?', InnerTree: { '0': [{ type: 'System.Boolean', data: JSON.stringify(curved) }] } },
         { ParamName: 'Strap Length', InnerTree: { '0': [{ type: 'System.Double', data: JSON.stringify(strapLength) }] } },
