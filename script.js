@@ -90,23 +90,36 @@ async function compute() {
 
     console.log('Values:', { numberOfMotors, lengthOfConnector, curved })
 
-    // Try constructing the trees and inspect their actual structure
-    let param1 = new RhinoCompute.Grasshopper.DataTree('Length of connector')
-    param1.append([0], [lengthOfConnector])
+    // Manually construct the parameter objects in the format RhinoCompute expects
+    // evaluateDefinition uses tree.data, so we wrap in .data
+    const trees = [
+        {
+            data: {
+                ParamName: 'Length of connector',
+                InnerTree: {
+                    '0': [{ type: 'System.Double', data: JSON.stringify(lengthOfConnector) }]
+                }
+            }
+        },
+        {
+            data: {
+                ParamName: 'Number of Motors',
+                InnerTree: {
+                    '0': [{ type: 'System.Int32', data: JSON.stringify(numberOfMotors) }]
+                }
+            }
+        },
+        {
+            data: {
+                ParamName: 'Curved?',
+                InnerTree: {
+                    '0': [{ type: 'System.Boolean', data: JSON.stringify(curved) }]
+                }
+            }
+        }
+    ]
 
-    let param2 = new RhinoCompute.Grasshopper.DataTree('Number of Motors')
-    param2.append([0], [numberOfMotors])
-
-    let param3 = new RhinoCompute.Grasshopper.DataTree('Curved?')
-    param3.append([0], [curved])
-
-    // Log the actual object properties
-    console.log('param1 keys:', Object.keys(param1))
-    console.log('param1.ParamName:', param1.ParamName)
-    console.log('param1.InnerTree:', param1.InnerTree)
-    console.log('param1 full:', param1)
-
-    let trees = [param1, param2, param3]
+    console.log('Trees being sent:', JSON.stringify(trees, null, 2))
 
     // Call RhinoCompute
     try {
