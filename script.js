@@ -84,33 +84,29 @@ updateEstimatedLengths()
 async function compute() {
     showSpinner(true)
 
-    // Get values from HTML UI - use Number() to ensure proper numeric types for RhinoCompute
     const numberOfMotors = Math.round(Number(document.getElementById('numMotors').value))
     const lengthOfConnector = Number(document.getElementById('lenConnector').value)
+    const curved = document.getElementById('curved')?.checked || false
 
-    console.log('Raw values:', { numberOfMotors, lengthOfConnector, types: { motors: typeof numberOfMotors, connector: typeof lengthOfConnector } })
+    console.log('Values:', { numberOfMotors, lengthOfConnector, curved })
 
-    // Format data into Grasshopper DataTrees (order matches definition: Length of connector first, Number of Motors second)
+    // Try constructing the trees and inspect their actual structure
     let param1 = new RhinoCompute.Grasshopper.DataTree('Length of connector')
-    param1.append([0], [lengthOfConnector])  // Ensure number, not string
+    param1.append([0], [lengthOfConnector])
 
     let param2 = new RhinoCompute.Grasshopper.DataTree('Number of Motors')
-    param2.append([0], [numberOfMotors])  // Ensure number, not string
+    param2.append([0], [numberOfMotors])
 
-    let trees = [param1, param2]
+    let param3 = new RhinoCompute.Grasshopper.DataTree('Curved?')
+    param3.append([0], [curved])
 
-    const curvedEl = document.getElementById('curved')
-    if (curvedEl) {
-        const param3 = new RhinoCompute.Grasshopper.DataTree('Curved?')
-        param3.append([0], [curvedEl.checked])
-        trees.push(param3)
-    }
+    // Log the actual object properties
+    console.log('param1 keys:', Object.keys(param1))
+    console.log('param1.ParamName:', param1.ParamName)
+    console.log('param1.InnerTree:', param1.InnerTree)
+    console.log('param1 full:', param1)
 
-    console.log('Sending params:', { numberOfMotors, lengthOfConnector, curved: curvedEl?.checked })
-    console.log('Trees being sent:', JSON.stringify(trees.map(t => ({
-        name: t.ParamName,
-        data: t.InnerTree
-    })), null, 2))
+    let trees = [param1, param2, param3]
 
     // Call RhinoCompute
     try {
