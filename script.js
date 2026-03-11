@@ -104,6 +104,31 @@ async function compute() {
 
     console.log('Trees being sent:', JSON.stringify(trees, null, 2))
 
+    // Temporary: raw fetch to see the actual response/error
+    let binary = ''
+    for (let i = 0; i < definition.length; i += 8192) {
+        binary += String.fromCharCode.apply(null, definition.subarray(i, Math.min(i + 8192, definition.length)))
+    }
+    const algoBase64 = btoa(binary)
+    try {
+        const response = await fetch(RhinoCompute.url + 'grasshopper', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RhinoComputeKey': RhinoCompute.apiKey
+            },
+            body: JSON.stringify({
+                algo: algoBase64,
+                pointer: null,
+                values: trees
+            })
+        })
+        const text = await response.text()
+        console.log('Raw response:', response.status, text)
+    } catch (err) {
+        console.error('Fetch error:', err)
+    }
+
     try {
         const res = await RhinoCompute.Grasshopper.evaluateDefinition(definition, trees)
         console.log("Compute response:", res)
