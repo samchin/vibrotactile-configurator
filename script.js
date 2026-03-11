@@ -23,24 +23,23 @@ const GH_CONSTANTS = {
  * @param {number} connectorSliderValue - Value from "Length of connector" slider
  * @returns {object} Calculated lengths in inches
  */
-function preCalculateNecklace(numMotors, spaceBetweenMotorsCm, strapLength) {
-    const spaceBetweenInches = (spaceBetweenMotorsCm ?? 2.5) / 2.54
-    const totalWithoutStrap = numMotors * spaceBetweenInches
-    const totalWithStrap = totalWithoutStrap + (strapLength ?? GH_CONSTANTS.strap)
+function preCalculateNecklace(numMotors, spaceBetweenMotorsCm, strapLengthCm) {
+    const totalWithoutStrap = numMotors * (spaceBetweenMotorsCm ?? 2.5)
+    const totalWithStrap = totalWithoutStrap + (strapLengthCm ?? 20.24)
 
     return {
-        excludingStrap: parseFloat(totalWithoutStrap.toFixed(2)),
-        includingStrap: parseFloat(totalWithStrap.toFixed(2))
+        excludingStrapCm: parseFloat(totalWithoutStrap.toFixed(2)),
+        includingStrapCm: parseFloat(totalWithStrap.toFixed(2))
     }
 }
 
 function updateEstimatedLengths() {
     const numMotors = parseInt(document.getElementById('numMotors').value)
-    const strapVal = parseFloat(document.getElementById('strapLength')?.value ?? GH_CONSTANTS.strap)
-    const spaceVal = parseFloat(document.getElementById('spaceBetweenMotors')?.value ?? 2.5)
-    const result = preCalculateNecklace(numMotors, spaceVal, strapVal)
-    document.getElementById('lengthExclStrap').innerText = result.excludingStrap + '"'
-    document.getElementById('lengthInclStrap').innerText = result.includingStrap + '"'
+    const strapCm = parseFloat(document.getElementById('strapLength')?.value ?? 20.24)
+    const spaceCm = parseFloat(document.getElementById('spaceBetweenMotors')?.value ?? 2.5)
+    const result = preCalculateNecklace(numMotors, spaceCm, strapCm)
+    document.getElementById('lengthExclStrap').innerText = result.excludingStrapCm + ' cm'
+    document.getElementById('lengthInclStrap').innerText = result.includingStrapCm + ' cm'
 }
 
 /**
@@ -76,11 +75,11 @@ document.getElementById('numMotors').addEventListener('input', (e) => {
     updateEstimatedLengths()
 })
 document.getElementById('strapLength')?.addEventListener('input', (e) => {
-    document.getElementById('strapLengthVal').innerText = parseFloat(e.target.value).toFixed(3)
+    document.getElementById('strapLengthVal').innerText = parseFloat(e.target.value).toFixed(2)
     updateEstimatedLengths()
 })
 document.getElementById('spaceBetweenMotors')?.addEventListener('input', (e) => {
-    document.getElementById('spaceBetweenMotorsVal').innerText = parseFloat(e.target.value).toFixed(3)
+    document.getElementById('spaceBetweenMotorsVal').innerText = parseFloat(e.target.value).toFixed(2)
 })
 document.getElementById('computeBtn').addEventListener('click', compute)
 document.getElementById('downloadBtn').addEventListener('click', downloadMesh)
@@ -100,15 +99,16 @@ async function compute() {
 
     const numberOfMotors = Math.round(Number(document.getElementById('numMotors').value))
     const curved = document.getElementById('curved')?.checked || false
-    const strapLength = Number(document.getElementById('strapLength')?.value ?? 7.97)
+    const strapLengthCm = Number(document.getElementById('strapLength')?.value ?? 20.24)
+    const strapLengthInches = strapLengthCm / 2.54
     const spaceBetweenMotors = Number(document.getElementById('spaceBetweenMotors')?.value ?? 2.5)
 
-    console.log('Values:', { numberOfMotors, curved, strapLength, spaceBetweenMotors })
+    console.log('Values:', { numberOfMotors, curved, strapLengthCm, strapLengthInches, spaceBetweenMotors })
 
     const trees = [
         { ParamName: 'Number of motors', InnerTree: { '0': [{ type: 'System.Int32', data: JSON.stringify(numberOfMotors) }] } },
         { ParamName: 'Curved?', InnerTree: { '0': [{ type: 'System.Boolean', data: JSON.stringify(curved) }] } },
-        { ParamName: 'Strap Length', InnerTree: { '0': [{ type: 'System.Double', data: JSON.stringify(strapLength) }] } },
+        { ParamName: 'Strap Length', InnerTree: { '0': [{ type: 'System.Double', data: JSON.stringify(strapLengthInches) }] } },
         { ParamName: 'Distance between adjacent motors', InnerTree: { '0': [{ type: 'System.Double', data: JSON.stringify(spaceBetweenMotors) }] } }
     ]
 
@@ -148,13 +148,15 @@ function collectResults(responseJson) {
 
                 // Check for panel text outputs
                 if (paramName === 'Length of necklace excluding strap in inches') {
-                    const val = JSON.parse(branch[j].data)
-                    document.getElementById('lengthExclStrap').innerText = val + '"'
+                    const valInches = parseFloat(JSON.parse(branch[j].data))
+                    const valCm = (valInches * 2.54).toFixed(2)
+                    document.getElementById('lengthExclStrap').innerText = valCm + ' cm'
                     continue
                 }
                 if (paramName === 'Length of necklace including strap in inches') {
-                    const val = JSON.parse(branch[j].data)
-                    document.getElementById('lengthInclStrap').innerText = val + '"'
+                    const valInches = parseFloat(JSON.parse(branch[j].data))
+                    const valCm = (valInches * 2.54).toFixed(2)
+                    document.getElementById('lengthInclStrap').innerText = valCm + ' cm'
                     continue
                 }
 
