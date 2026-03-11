@@ -107,6 +107,10 @@ async function compute() {
     }
 
     console.log('Sending params:', { numberOfMotors, lengthOfConnector, curved: curvedEl?.checked })
+    console.log('Trees being sent:', JSON.stringify(trees.map(t => ({
+        name: t.ParamName,
+        data: t.InnerTree
+    })), null, 2))
 
     // Call RhinoCompute
     try {
