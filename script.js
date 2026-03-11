@@ -23,16 +23,9 @@ const GH_CONSTANTS = {
  * @param {number} connectorSliderValue - Value from "Length of connector" slider
  * @returns {object} Calculated lengths in inches
  */
-function preCalculateNecklace(numMotors, connectorSliderValue, strapLength, spaceBetweenMotorsCm) {
-    // spaceBetweenMotorsCm is in cm; convert to inches (1 in = 2.54 cm)
+function preCalculateNecklace(numMotors, spaceBetweenMotorsCm, strapLength) {
     const spaceBetweenInches = (spaceBetweenMotorsCm ?? 2.5) / 2.54
-    const dynamicConnectorLen = GH_CONSTANTS.connectorBase * connectorSliderValue
-    const ringsTotal = numMotors * GH_CONSTANTS.motorRing
-    // Use distance-between-motors when available, else connector-based spacing
-    const connectorSpacing = spaceBetweenInches > 0 ? spaceBetweenInches : dynamicConnectorLen
-    const connectorsTotal = (numMotors - 1) * connectorSpacing
-    const arrayLength = ringsTotal + connectorsTotal
-    const totalWithoutStrap = arrayLength + GH_CONSTANTS.hook
+    const totalWithoutStrap = numMotors * spaceBetweenInches
     const totalWithStrap = totalWithoutStrap + (strapLength ?? GH_CONSTANTS.strap)
 
     return {
@@ -43,10 +36,9 @@ function preCalculateNecklace(numMotors, connectorSliderValue, strapLength, spac
 
 function updateEstimatedLengths() {
     const numMotors = parseInt(document.getElementById('numMotors').value)
-    const connectorVal = parseFloat(document.getElementById('lenConnector').value)
     const strapVal = parseFloat(document.getElementById('strapLength')?.value ?? GH_CONSTANTS.strap)
     const spaceVal = parseFloat(document.getElementById('spaceBetweenMotors')?.value ?? 2.5)
-    const result = preCalculateNecklace(numMotors, connectorVal, strapVal, spaceVal)
+    const result = preCalculateNecklace(numMotors, spaceVal, strapVal)
     document.getElementById('lengthExclStrap').innerText = result.excludingStrap + '"'
     document.getElementById('lengthInclStrap').innerText = result.includingStrap + '"'
 }
