@@ -1,1 +1,6 @@
 .venv
+# verification meshes and tools (regenerate with the scripts in export/ and flat/)
+*.stl
+*.3dm
+export/node_modules/
+config.json

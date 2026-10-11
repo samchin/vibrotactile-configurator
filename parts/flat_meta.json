@@ -1,0 +1,10 @@
+{
+ "units": "mm",
+ "pitch": 32.03,
+ "firstWaistX": 707.6550000000001,
+ "ringRadius": 12.7,
+ "motorHoleRadius": 10.535,
+ "ring1CenterX": 691.6400000000001,
+ "axisY": -714.27,
+ "source": "Flat_necklace.stp"
+}

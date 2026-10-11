@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:;base64,=">
-    <title>RhinoCompute: Necklace Configurator</title>
+    <title>Necklace Configurator</title>
     <style>
         body {
             margin: 0;
@@ -90,6 +90,47 @@
         button:hover {
             background-color: #555;
         }
+
+        .info-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #888;
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            padding: 0;
+            margin-left: 4px;
+            vertical-align: middle;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .info-btn:hover {
+            background: #555;
+        }
+
+        .info-text {
+            display: none;
+            margin-top: 6px;
+            padding: 8px;
+            background: #f0f4f8;
+            border-left: 3px solid #888;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: normal;
+            line-height: 1.4;
+            color: #333;
+        }
+
+        .info-text.visible {
+            display: block;
+        }
     </style>
 </head>
 
@@ -98,29 +139,37 @@
 
     <div id="ui-panel">
         <p style="margin: 0 0 15px 0; padding: 10px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; font-size: 13px; line-height: 1.4; color: #856404;">
-            Computing the 3D model takes approximately <strong>5 minutes</strong> after you hit Compute.
+            The model updates in a few seconds after you change a setting. Everything runs in your browser.
         </p>
 
         <div class="control-group">
-            <label for="numMotors">Number of Motors: <span id="numMotorsVal" class="value-display">6</span></label>
+            <label for="numMotors">Number of Motors <span id="numMotorsVal" class="value-display">6</span></label>
             <input type="range" id="numMotors" min="2" max="10" step="1" value="6">
         </div>
         <div class="control-group">
-            <label for="strapLength">Strap Length (cm): <span id="strapLengthVal" class="value-display">20.24</span></label>
-            <input type="range" id="strapLength" min="0" max="20.24" step="0.01" value="20.24">
+            <label for="strapLength">Strap Length (cm)
+                <button type="button" class="info-btn" onclick="this.nextElementSibling.classList.toggle('visible')">?</button>
+                <span id="strapLengthVal" class="value-display">20.26</span>
+            </label>
+            <div class="info-text">The length of the flexible strap that connects the two ends of the necklace behind the neck. Set to 0 for no strap.</div>
+            <input type="range" id="strapLength" min="0" max="20.26" step="0.01" value="20.26">
         </div>
         <div class="control-group">
-            <label for="spaceBetweenMotors">Space between Adjacent Motors (cm): <span id="spaceBetweenMotorsVal"
-                    class="value-display">2.5</span></label>
-            <input type="range" id="spaceBetweenMotors" min="2.5" max="10" step="0.001" value="2.5">
+            <label for="spaceBetweenMotors">Space between Adjacent Motors (cm)
+                <button type="button" class="info-btn" onclick="this.nextElementSibling.classList.toggle('visible')">?</button>
+                <span id="spaceBetweenMotorsVal" class="value-display">3.20</span>
+            </label>
+            <div class="info-text">The distance from one motor to the next. 3.20 cm is the original design; larger values lengthen the web between rings, smaller values shorten it (2.7 cm minimum, where the rings nearly touch).</div>
+            <input type="range" id="spaceBetweenMotors" min="2.7" max="10" step="0.01" value="3.203">
         </div>
         <div class="control-group">
             <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
                 <input type="checkbox" id="curved" value="1">
                 Curved?
+                <button type="button" class="info-btn" onclick="event.preventDefault(); this.parentElement.nextElementSibling.classList.toggle('visible')">?</button>
             </label>
+            <div class="info-text">Enable this if you are printing on a Formlabs printer or if the device you want to make is longer than the print bed. This curves the necklace to fit within a smaller build volume.</div>
         </div>
-        <button id="computeBtn">Compute Necklace</button>
         <button id="downloadBtn" style="margin-top: 8px; background-color: #555;" disabled>Download STL</button>
 
         <div id="output-panel" style="margin-top: 15px;">
@@ -128,6 +177,7 @@
             <div class="control-group" style="margin-bottom: 0;">
                 <label style="font-size: 13px;">Necklace length (incl. strap): <span id="lengthInclStrap"
                         class="value-display">—</span></label>
+                <div id="status" style="font-size: 12px; color: #666; margin-top: 6px;"></div>
             </div>
         </div>
     </div>
@@ -138,11 +188,7 @@
             {
                 "imports": {
                     "three": "https://unpkg.com/three@0.144.0/build/three.module.js",
-                    "three/examples/jsm/controls/OrbitControls": "https://unpkg.com/three@0.144.0/examples/jsm/controls/OrbitControls.js",
-                    "three/examples/jsm/loaders/3DMLoader": "https://unpkg.com/three@0.144.0/examples/jsm/loaders/3DMLoader.js",
-                    "three/examples/jsm/exporters/STLExporter": "https://unpkg.com/three@0.144.0/examples/jsm/exporters/STLExporter.js",
-                    "rhino3dm":"https://unpkg.com/rhino3dm@8.0.0-beta/rhino3dm.module.js",
-                    "rhinocompute": "https://www.unpkg.com/compute-rhino3d@0.13.0-beta/compute.rhino3d.module.js"
+                    "three/examples/jsm/controls/OrbitControls": "https://unpkg.com/three@0.144.0/examples/jsm/controls/OrbitControls.js"
                 }
             }
         </script>
