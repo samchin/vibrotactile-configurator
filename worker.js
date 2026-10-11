@@ -11,7 +11,7 @@ const ready = (async () => {
     return { wasm, parts: { head, unit, tail, strap } }
 })()
 
-let last = null
+let last = null, lastParams = null
 
 self.onmessage = async ({ data }) => {
     try {
@@ -19,10 +19,13 @@ self.onmessage = async ({ data }) => {
         if (data.type === 'build') {
             const t = performance.now()
             last = buildNecklace(parts, data.params, wasm)
+            lastParams = data.params
             const pos = last.pos.slice(), idx = last.idx.slice()
             self.postMessage({ type: 'mesh', id: data.id, pos, idx, ms: performance.now() - t }, [pos.buffer, idx.buffer])
         } else if (data.type === 'stl' && last) {
-            const stl = toSTL(last)
+            // the cone is shown as worn but printed flat, so the download is always the flat piece
+            const printable = lastParams.shape === 'cone' && lastParams.worn ? buildNecklace(parts, { ...lastParams, worn: false }, wasm) : last
+            const stl = toSTL(printable)
             self.postMessage({ type: 'stl', stl }, [stl])
         }
     } catch (err) {

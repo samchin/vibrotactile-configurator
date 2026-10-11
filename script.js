@@ -9,13 +9,16 @@ const worker = new Worker('./worker.js', { type: 'module' })
 // Globals
 let scene, camera, renderer, controls, resultMesh
 let buildId = 0, pending = false, queued = false
+let pendingView = '', shownView = ''   // shape (and worn/flat) of the build in flight and on screen
 
 function readParams() {
     return {
         motors: parseInt(document.getElementById('numMotors').value),
         strapCm: parseFloat(document.getElementById('strapLength').value),
         pitchCm: parseFloat(document.getElementById('spaceBetweenMotors').value),
-        curved: document.getElementById('curved').checked,
+        shape: document.getElementById('shape').value,
+        neckCm: parseFloat(document.getElementById('neckCm').value),
+        worn: !document.getElementById('showFlat').checked,
     }
 }
 
@@ -37,15 +40,22 @@ document.getElementById('spaceBetweenMotors').addEventListener('input', (e) => {
     document.getElementById('spaceBetweenMotorsVal').innerText = parseFloat(e.target.value).toFixed(2)
     updateEstimatedLengths()
 })
-// Rebuild when a slider is released or the checkbox changes
-for (const id of ['numMotors', 'strapLength', 'spaceBetweenMotors', 'curved'])
+document.getElementById('neckCm').addEventListener('input', (e) => {
+    document.getElementById('neckCmVal').innerText = parseFloat(e.target.value).toFixed(1)
+})
+document.getElementById('shape').addEventListener('change', (e) => {
+    document.getElementById('coneOptions').style.display = e.target.value === 'cone' ? 'block' : 'none'
+})
+// Rebuild when a slider is released or a setting changes
+for (const id of ['numMotors', 'strapLength', 'spaceBetweenMotors', 'shape', 'neckCm', 'showFlat'])
     document.getElementById(id).addEventListener('change', compute)
 document.getElementById('downloadBtn').addEventListener('click', () => worker.postMessage({ type: 'stl' }))
 
 worker.onmessage = ({ data }) => {
     if (data.type === 'mesh') {
         pending = false
-        showMesh(data.pos, data.idx)
+        showMesh(data.pos, data.idx, pendingView !== shownView)
+        shownView = pendingView
         setStatus(`Built in ${(data.ms / 1000).toFixed(1)} s · ${(data.idx.length / 3).toLocaleString()} triangles`)
         document.getElementById('downloadBtn').disabled = false
         showSpinner(false)
@@ -66,6 +76,10 @@ worker.onmessage = ({ data }) => {
     }
 }
 
+// Browsers can restore form values on reload; match the cone options to them
+document.getElementById('coneOptions').style.display = document.getElementById('shape').value === 'cone' ? 'block' : 'none'
+document.getElementById('neckCmVal').innerText = parseFloat(document.getElementById('neckCm').value).toFixed(1)
+
 // Initialize Three.js scene
 init()
 updateEstimatedLengths()
@@ -77,10 +91,13 @@ function compute() {
     pending = true
     showSpinner(true)
     setStatus('Building…')
-    worker.postMessage({ type: 'build', id: ++buildId, params: readParams() })
+    const params = readParams()
+    pendingView = params.shape + (params.shape === 'cone' ? (params.worn ? ' worn' : ' flat') : '')
+    worker.postMessage({ type: 'build', id: ++buildId, params })
 }
 
-function showMesh(pos, idx) {
+// reframe: move the camera to fit, e.g. after switching shape
+function showMesh(pos, idx, reframe) {
     const geometry = new THREE.BufferGeometry()
     geometry.setAttribute('position', new THREE.BufferAttribute(pos, 3))
     geometry.setIndex(new THREE.BufferAttribute(idx, 1))
@@ -98,7 +115,7 @@ function showMesh(pos, idx) {
         side: THREE.DoubleSide
     }))
     scene.add(resultMesh)
-    centerView(first)
+    centerView(first || reframe)
 }
 
 function centerView(moveCamera) {

@@ -67,8 +67,14 @@
             font-size: 14px;
         }
 
-        .control-group input[type="range"] {
+        .control-group input[type="range"],
+        .control-group select {
             width: 100%;
+        }
+
+        .control-group select {
+            padding: 4px;
+            font-size: 14px;
         }
 
         .value-display {
@@ -163,12 +169,31 @@
             <input type="range" id="spaceBetweenMotors" min="2.7" max="10" step="0.01" value="3.203">
         </div>
         <div class="control-group">
-            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                <input type="checkbox" id="curved" value="1">
-                Curved?
-                <button type="button" class="info-btn" onclick="event.preventDefault(); this.parentElement.nextElementSibling.classList.toggle('visible')">?</button>
+            <label for="shape">Shape
+                <button type="button" class="info-btn" onclick="this.nextElementSibling.classList.toggle('visible')">?</button>
             </label>
-            <div class="info-text">Enable this if you are printing on a Formlabs printer or if the device you want to make is longer than the print bed. This curves the necklace to fit within a smaller build volume.</div>
+            <div class="info-text"><b>Flat</b>: the necklace laid out straight. <b>Curved</b>: wrapped into a loop, for Formlabs printers or a necklace longer than the print bed. <b>Cone 45°</b>: printed flat as a spiral that bends into a cone sloping 45° down from the neck when worn, with the strap on the inside and the hook on the outside.</div>
+            <select id="shape">
+                <option value="flat">Flat</option>
+                <option value="curved">Curved</option>
+                <option value="cone">Cone 45°</option>
+            </select>
+        </div>
+        <div id="coneOptions" style="display: none;">
+            <div class="control-group">
+                <label for="neckCm">Neck Circumference (cm)
+                    <button type="button" class="info-btn" onclick="this.nextElementSibling.classList.toggle('visible')">?</button>
+                    <span id="neckCmVal" class="value-display">38.0</span>
+                </label>
+                <div class="info-text">Measured around the base of the neck, plus any slack you want. Sets the size of the inner turn.</div>
+                <input type="range" id="neckCm" min="28" max="50" step="0.5" value="38">
+            </div>
+            <div class="control-group">
+                <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="showFlat">
+                    Show the flat piece to print
+                </label>
+            </div>
         </div>
         <button id="downloadBtn" style="margin-top: 8px; background-color: #555;" disabled>Download STL</button>
 
